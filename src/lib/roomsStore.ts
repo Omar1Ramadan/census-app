@@ -9,18 +9,32 @@ export type { Player, Room } from '@/types/room';
 
 /**
  * Sanitizes room data for client responses.
- * Hides question text and author info during lobby/question phases.
+ * - Hides question text during lobby/question phases
+ * - Hides votes during review phase (voting is private until complete)
  */
 export function sanitizeRoomForClient(room: Room): Room {
-  if (room.phase === 'review' || room.phase === 'complete') {
+  // During complete phase, show everything
+  if (room.phase === 'complete') {
     return room;
   }
+
+  // During review phase, show questions but hide all votes
+  if (room.phase === 'review') {
+    const questionsWithoutVotes: Question[] = room.questions.map((q) => ({
+      ...q,
+      votes: {}, // Hide votes until complete
+    }));
+    return {
+      ...room,
+      questions: questionsWithoutVotes,
+    };
+  }
   
-  // During lobby/question phases, hide question details
+  // During lobby/question phases, hide question details entirely
   const hiddenQuestions: Question[] = room.questions.map((q) => ({
     id: q.id,
-    text: '', // Hide the actual question text
-    authorId: '', // Hide who submitted it
+    text: '',
+    authorId: '',
     createdAt: q.createdAt,
     votes: {},
   }));
@@ -88,6 +102,8 @@ export async function createRoom(hostName: string, questionDurationSeconds: numb
     name: hostName.trim(),
     joinedAt: Date.now(),
     isHost: true,
+    currentQuestionIndex: 0,
+    hasFinishedVoting: false,
   };
   const room: Room = {
     code,
@@ -116,6 +132,8 @@ export async function joinRoom(code: string, name: string) {
     name: name.trim(),
     joinedAt: Date.now(),
     isHost: false,
+    currentQuestionIndex: 0,
+    hasFinishedVoting: false,
   };
   const savedRoom = await persistAndBroadcast(room);
   return { room: savedRoom, playerId };
@@ -165,36 +183,55 @@ export async function startReviewPhase(code: string, hostId: string) {
   }
   room.phase = 'review';
   room.currentQuestionIndex = 0;
+  // Reset all players to start voting from question 0
+  for (const player of Object.values(room.players)) {
+    player.currentQuestionIndex = 0;
+    player.hasFinishedVoting = false;
+  }
   return persistAndBroadcast(room);
 }
 
-export async function submitVote(code: string, playerId: string, targetPlayerId: string) {
+export async function submitVote(code: string, playerId: string, targetPlayerId: string, questionIndex: number) {
   const room = await assertRoomExists(code);
-  assertPlayer(room, playerId);
+  const player = assertPlayer(room, playerId);
   assertPlayer(room, targetPlayerId);
   if (room.phase !== 'review') {
     throw new Error('Voting is not active');
   }
-  const currentQuestion = room.questions[room.currentQuestionIndex];
-  if (!currentQuestion) {
-    throw new Error('No question selected');
+  const question = room.questions[questionIndex];
+  if (!question) {
+    throw new Error('Invalid question');
   }
-  currentQuestion.votes[playerId] = targetPlayerId;
+  // Record the vote
+  question.votes[playerId] = targetPlayerId;
+  
+  // Move player to next question
+  if (questionIndex < room.questions.length - 1) {
+    player.currentQuestionIndex = questionIndex + 1;
+  } else {
+    player.hasFinishedVoting = true;
+  }
+  
+  // Check if all players have finished voting
+  const allFinished = Object.values(room.players).every((p) => p.hasFinishedVoting);
+  if (allFinished) {
+    room.phase = 'complete';
+    room.questionDeadline = undefined;
+  }
+  
   return persistAndBroadcast(room);
 }
 
+/** @deprecated Use submitVote with questionIndex instead - players now vote at their own pace */
 export async function goToNextQuestion(code: string, hostId: string) {
   const room = await assertRoomExists(code);
   assertHost(room, hostId);
   if (room.phase !== 'review') {
     throw new Error('Review phase has not started');
   }
-  if (room.currentQuestionIndex < room.questions.length - 1) {
-    room.currentQuestionIndex += 1;
-  } else {
-    room.phase = 'complete';
-    room.questionDeadline = undefined;
-  }
+  // This now just completes the room (host can end early)
+  room.phase = 'complete';
+  room.questionDeadline = undefined;
   return persistAndBroadcast(room);
 }
 

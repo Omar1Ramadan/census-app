@@ -522,6 +522,67 @@
   transition: width 0.3s ease;
 }
 
+/* Voting section */
+.votingSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Progress bar */
+.progressInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+}
+
+.progressLabel {
+  font-size: 13px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.progressBar {
+  height: 10px;
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #34d399, #38bdf8);
+  border-radius: 5px;
+  transition: width 0.4s ease;
+}
+
+.progressText {
+  font-size: 14px;
+  color: #cbd5f5;
+}
+
+/* Player voting status in sidebar */
+.playerStatus {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.playerStatus[data-done='true'] {
+  background: rgba(52, 211, 153, 0.2);
+  color: #34d399;
+}
+
+.playerStatus[data-done='false'] {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+
 @media (max-width: 1024px) {
   .contentGrid {
     grid-template-columns: 1fr;

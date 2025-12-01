@@ -183,43 +183,19 @@ export default function Home() {
     return Object.values(room.players).sort((a, b) => a.joinedAt - b.joinedAt);
   }, [room]);
 
-  const currentQuestion = room ? room.questions[room.currentQuestionIndex] : undefined;
-  const playerVote = currentQuestion && session ? currentQuestion.votes[session.playerId] : undefined;
+  // Get current player's data
+  const currentPlayer = room && session ? room.players[session.playerId] : undefined;
+  const myQuestionIndex = currentPlayer?.currentQuestionIndex ?? 0;
+  const hasFinishedVoting = currentPlayer?.hasFinishedVoting ?? false;
 
-  const voteCounts = useMemo<Record<string, number>>(() => {
-    if (!currentQuestion) return {};
-    return Object.values(currentQuestion.votes).reduce<Record<string, number>>((acc, playerId) => {
-      acc[playerId] = (acc[playerId] ?? 0) + 1;
-      return acc;
-    }, {});
-  }, [currentQuestion]);
-
-  const pieData = useMemo(() => {
-    if (!currentQuestion || players.length === 0) return null;
-    const distribution = players.map((player) => voteCounts[player.id] ?? 0);
-    if (!distribution.some((value) => value > 0)) {
-      return {
-        labels: ['No votes yet'],
-        datasets: [
-          {
-            data: [1],
-            backgroundColor: ['#1f2937'],
-            borderWidth: 0,
-          },
-        ],
-      };
-    }
-    return {
-      labels: players.map((player) => player.name),
-      datasets: [
-        {
-          data: distribution,
-          backgroundColor: players.map((_, index) => PIE_COLORS[index % PIE_COLORS.length]),
-          borderWidth: 0,
-        },
-      ],
-    };
-  }, [currentQuestion, players, voteCounts]);
+  // Current question is based on THIS player's progress, not room-wide
+  const currentQuestion = room ? room.questions[myQuestionIndex] : undefined;
+  
+  // Count how many players have finished voting
+  const playersFinished = useMemo(() => {
+    if (!room) return 0;
+    return Object.values(room.players).filter((p) => p.hasFinishedVoting).length;
+  }, [room]);
 
   const questionSummaries = useMemo(() => {
     if (!room) return [];
@@ -349,12 +325,19 @@ export default function Home() {
     setQuestionText('');
   };
 
-  const handleVote = async (targetPlayerId: string) => {
+  const handleVote = async (targetPlayerId: string, questionIndex: number) => {
     if (!session) return;
-    await callRoomAction(`/api/rooms/${session.roomCode}/vote`, {
-      playerId: session.playerId,
-      targetPlayerId,
-    });
+    await callRoomAction(
+      `/api/rooms/${session.roomCode}/vote`,
+      {
+        playerId: session.playerId,
+        targetPlayerId,
+        questionIndex,
+      },
+      questionIndex === (room?.questions.length ?? 1) - 1
+        ? 'All votes submitted!'
+        : undefined,
+    );
   };
 
   const handleCopyCode = async () => {
@@ -464,56 +447,28 @@ export default function Home() {
       );
     }
 
-    if (room.phase === 'review' && currentQuestion) {
-      return (
-        <div className={styles.stageContent}>
-          <div className={styles.questionMeta}>
-            <span>
-              Question {room.currentQuestionIndex + 1} of {room.questions.length}
-            </span>
-            <strong>{currentQuestion.text}</strong>
-          </div>
-          <div className={styles.voteGrid}>
-            <div>
-              <p>Vote for the player that best fits this question.</p>
-              <div className={styles.voteButtons}>
-                {players.map((player) => (
-                  <button
-                    key={player.id}
-                    type="button"
-                    className={`${styles.voteButton} ${
-                      playerVote === player.id ? styles.voteButtonActive : ''
-                    }`}
-                    onClick={() => handleVote(player.id)}
-                    disabled={isBusy}
-                  >
-                    {player.name}
-                    {playerVote === player.id && <span className={styles.badge}>Your pick</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className={styles.chartShell}>
-              {pieData ? (
-                <Pie
-                  data={pieData}
-                  options={{
-                    plugins: {
-                      legend: {
-                        labels: {
-                          color: '#f1f5f9',
-                        },
-                      },
-                    },
-                  }}
+    if (room.phase === 'review') {
+      // Player has finished voting - show waiting screen
+      if (hasFinishedVoting) {
+        return (
+          <div className={styles.stageContent}>
+            <h3>You&apos;ve finished voting! 🗳️</h3>
+            <p>
+              Waiting for other players to finish. Results will appear once everyone has voted.
+            </p>
+            <div className={styles.progressInfo}>
+              <span className={styles.progressLabel}>Voting progress</span>
+              <div className={styles.progressBar}>
+                <div
+                  className={styles.progressFill}
+                  style={{ width: `${(playersFinished / players.length) * 100}%` }}
                 />
-              ) : (
-                <p className={styles.mutedText}>Votes will appear here as soon as people pick.</p>
-              )}
+              </div>
+              <span className={styles.progressText}>
+                {playersFinished} of {players.length} players done
+              </span>
             </div>
-          </div>
-          {isHost && (
-            <div className={styles.actionsRow}>
+            {isHost && (
               <button
                 type="button"
                 className={styles.buttonSecondary}
@@ -522,18 +477,63 @@ export default function Home() {
                   callRoomAction(
                     `/api/rooms/${room.code}/next-question`,
                     { playerId: session.playerId },
-                    room.currentQuestionIndex === room.questions.length - 1
-                      ? 'Session complete'
-                      : 'Next question ready',
+                    'Session ended',
                   )
                 }
               >
-                {room.currentQuestionIndex === room.questions.length - 1
-                  ? 'Finish session'
-                  : 'Next question'}
+                End voting early (show results)
               </button>
+            )}
+          </div>
+        );
+      }
+
+      // Player is still voting
+      if (!currentQuestion) {
+        return (
+          <p className={styles.emptyState}>Loading question...</p>
+        );
+      }
+
+      return (
+        <div className={styles.stageContent}>
+          <div className={styles.questionMeta}>
+            <span>
+              Question {myQuestionIndex + 1} of {room.questions.length}
+            </span>
+            <strong>{currentQuestion.text}</strong>
+          </div>
+          <div className={styles.votingSection}>
+            <p>Vote for the player that best fits this question.</p>
+            <p className={styles.mutedText}>
+              Your vote is private. Click a name to vote and move to the next question.
+            </p>
+            <div className={styles.voteButtons}>
+              {players.map((player) => (
+                <button
+                  key={player.id}
+                  type="button"
+                  className={styles.voteButton}
+                  onClick={() => handleVote(player.id, myQuestionIndex)}
+                  disabled={isBusy}
+                >
+                  {player.name}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
+          <div className={styles.progressInfo}>
+            <span className={styles.progressLabel}>Your progress</span>
+            <div className={styles.progressBar}>
+              <div
+                className={styles.progressFill}
+                style={{ width: `${(myQuestionIndex / room.questions.length) * 100}%` }}
+              />
+            </div>
+            <span className={styles.progressText}>
+              {myQuestionIndex} of {room.questions.length} answered
+            </span>
+          </div>
         </div>
       );
     }
@@ -758,15 +758,30 @@ export default function Home() {
                     <div className={styles.card}>
                       <div className={styles.cardHeader}>
                         <h3>Players ({players.length})</h3>
+                        {room.phase === 'review' && (
+                          <span className={styles.mutedText}>
+                            {playersFinished}/{players.length} done
+                          </span>
+                        )}
                       </div>
                       <ul className={styles.playersList}>
                         {players.map((player) => (
                           <li key={player.id} className={styles.playerItem}>
                             <span>{player.name}</span>
-                            {player.isHost && <span className={styles.tag}>Host</span>}
-                            {!player.isHost && session?.playerId === player.id && (
-                              <span className={styles.tag}>You</span>
-                            )}
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              {player.isHost && <span className={styles.tag}>Host</span>}
+                              {session?.playerId === player.id && (
+                                <span className={styles.tag}>You</span>
+                              )}
+                              {room.phase === 'review' && (
+                                <span
+                                  className={styles.playerStatus}
+                                  data-done={player.hasFinishedVoting}
+                                >
+                                  {player.hasFinishedVoting ? '✓ Done' : 'Voting...'}
+                                </span>
+                              )}
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -786,6 +801,11 @@ export default function Home() {
                               Questions are hidden until voting begins.
                             </p>
                           )
+                        ) : room.phase === 'review' ? (
+                          <p className={styles.mutedText}>
+                            {room.questions.length} question{room.questions.length !== 1 ? 's' : ''} to vote on.
+                            Results will be revealed when voting ends.
+                          </p>
                         ) : (
                           questionSummaries.map(({ question, totalVotes, winnerName }) => (
                             <div key={question.id} className={styles.questionItem}>

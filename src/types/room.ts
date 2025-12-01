@@ -5,6 +5,10 @@ export interface Player {
   name: string;
   joinedAt: number;
   isHost: boolean;
+  /** Index of the question the player is currently on (during review phase) */
+  currentQuestionIndex: number;
+  /** Whether the player has finished voting on all questions */
+  hasFinishedVoting: boolean;
 }
 
 export interface Question {
@@ -21,6 +25,7 @@ export interface Room {
   phase: RoomPhase;
   questionDurationSeconds: number;
   questionDeadline?: number;
+  /** @deprecated Use player.currentQuestionIndex instead for self-paced voting */
   currentQuestionIndex: number;
   createdAt: number;
   players: Record<string, Player>;
