@@ -1,4 +1,4 @@
-import type { Player, Room } from '@/types/room';
+import type { Player, Question, Room } from '@/types/room';
 import { broadcastRoom } from './roomBroadcaster';
 import { loadRoom, saveRoom } from './roomRepository';
 
@@ -7,10 +7,35 @@ const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 export type { Player, Room } from '@/types/room';
 
+/**
+ * Sanitizes room data for client responses.
+ * Hides question text and author info during lobby/question phases.
+ */
+export function sanitizeRoomForClient(room: Room): Room {
+  if (room.phase === 'review' || room.phase === 'complete') {
+    return room;
+  }
+  
+  // During lobby/question phases, hide question details
+  const hiddenQuestions: Question[] = room.questions.map((q) => ({
+    id: q.id,
+    text: '', // Hide the actual question text
+    authorId: '', // Hide who submitted it
+    createdAt: q.createdAt,
+    votes: {},
+  }));
+
+  return {
+    ...room,
+    questions: hiddenQuestions,
+  };
+}
+
 async function persistAndBroadcast(room: Room) {
   const normalizedRoom: Room = { ...room, code: room.code.toUpperCase() };
   const saved = await saveRoom(normalizedRoom);
-  await broadcastRoom(saved);
+  // Broadcast sanitized version to clients
+  await broadcastRoom(sanitizeRoomForClient(saved));
   return saved;
 }
 

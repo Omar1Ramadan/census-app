@@ -776,18 +776,27 @@ export default function Home() {
                         <h3>Questions ({room.questions.length})</h3>
                       </div>
                       <div className={styles.questionsList}>
-                        {questionSummaries.length === 0 && (
+                        {room.questions.length === 0 && (
                           <p className={styles.mutedText}>No questions submitted yet.</p>
                         )}
-                        {questionSummaries.map(({ question, totalVotes, winnerName }) => (
-                          <div key={question.id} className={styles.questionItem}>
-                            <p>{question.text}</p>
-                            <div className={styles.questionStats}>
-                              <span>{totalVotes} vote(s)</span>
-                              {winnerName && <span className={styles.tag}>{winnerName}</span>}
+                        {room.phase === 'lobby' || room.phase === 'question' ? (
+                          room.questions.length > 0 && (
+                            <p className={styles.mutedText}>
+                              {room.questions.length} question{room.questions.length !== 1 ? 's' : ''} submitted.
+                              Questions are hidden until voting begins.
+                            </p>
+                          )
+                        ) : (
+                          questionSummaries.map(({ question, totalVotes, winnerName }) => (
+                            <div key={question.id} className={styles.questionItem}>
+                              <p>{question.text}</p>
+                              <div className={styles.questionStats}>
+                                <span>{totalVotes} vote(s)</span>
+                                {winnerName && <span className={styles.tag}>{winnerName}</span>}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))
+                        )}
                       </div>
                     </div>
                   </aside>

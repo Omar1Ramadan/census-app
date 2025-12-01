@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { startQuestionPhase } from '@/lib/roomsStore';
+import { startQuestionPhase, sanitizeRoomForClient } from '@/lib/roomsStore';
 
 interface Params {
   params: Promise<{ code: string }>;
@@ -11,7 +11,7 @@ export async function POST(request: Request, { params }: Params) {
     const body = await request.json();
     const hostId = body?.playerId as string;
     const room = await startQuestionPhase(code, hostId);
-    return NextResponse.json(room);
+    return NextResponse.json(sanitizeRoomForClient(room));
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to start question round';
     return NextResponse.json({ message }, { status: 400 });
