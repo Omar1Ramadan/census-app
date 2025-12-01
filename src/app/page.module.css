@@ -1,0 +1,439 @@
+:root {
+  color-scheme: dark;
+}
+
+.page {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #1f2937, #0f172a 60%);
+  color: #f8fafc;
+  font-family: var(--font-geist-sans);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.logo {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #facc15;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  margin: 4px 0;
+}
+
+.subtitle {
+  max-width: 520px;
+  color: #cbd5f5;
+}
+
+.headerStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+  padding: 8px 16px;
+}
+
+.syncDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #475569;
+}
+
+.syncDot[data-active='true'] {
+  background: #34d399;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.8);
+}
+
+.statusBanner {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.statusError {
+  background: rgba(248, 113, 113, 0.15);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  color: #fecaca;
+}
+
+.statusSuccess {
+  background: rgba(74, 222, 128, 0.15);
+  border: 1px solid rgba(74, 222, 128, 0.5);
+  color: #bbf7d0;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.panel {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 15px 45px rgba(15, 23, 42, 0.4);
+}
+
+.panel h2 {
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: #cbd5f5;
+}
+
+.form input,
+.textarea {
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.buttonPrimary,
+.buttonSecondary,
+.buttonGhost {
+  border: none;
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.buttonPrimary {
+  background: linear-gradient(135deg, #f97316, #facc15);
+  color: #0f172a;
+}
+
+.buttonSecondary {
+  background: rgba(148, 163, 184, 0.2);
+  color: #f8fafc;
+}
+
+.buttonGhost {
+  background: transparent;
+  color: #cbd5f5;
+  border: 1px dashed rgba(148, 163, 184, 0.5);
+}
+
+.buttonPrimary:disabled,
+.buttonSecondary:disabled,
+.buttonGhost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buttonPrimary:not(:disabled):hover,
+.buttonSecondary:not(:disabled):hover,
+.buttonGhost:not(:disabled):hover,
+.voteButton:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.summaryCard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #cbd5f5;
+}
+
+.codeBadge {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.1);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.phaseLabel {
+  color: #facc15;
+}
+
+.linkButton {
+  border: none;
+  background: none;
+  color: #93c5fd;
+  cursor: pointer;
+}
+
+.actionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.stageCard {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 24px;
+  padding: 24px;
+  min-height: 320px;
+}
+
+.stageContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.questionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timer {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(248, 117, 55, 0.15);
+  border: 1px solid rgba(248, 117, 55, 0.4);
+}
+
+.voteGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 280px);
+  gap: 20px;
+}
+
+.voteButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.voteButton {
+  flex: 1 1 120px;
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 12px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.voteButtonActive {
+  border-color: #facc15;
+  background: rgba(250, 204, 21, 0.15);
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.2);
+  font-size: 12px;
+  color: #facc15;
+}
+
+.chartShell {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sideColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cardHeader h3 {
+  margin: 0;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.playersList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.playerItem {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #bfdbfe;
+  font-size: 12px;
+}
+
+.questionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.questionItem {
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.12);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.questionMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.questionStats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #cbd5f5;
+}
+
+.questionMeta strong {
+  font-size: 1.2rem;
+}
+
+.questionForm label {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.mutedText {
+  color: #94a3b8;
+}
+
+.emptyState {
+  text-align: center;
+  color: #cbd5f5;
+  padding: 32px 16px;
+  border-radius: 16px;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+@media (max-width: 1024px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .voteGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .summaryCard {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    flex-direction: column;
+  }
+
+  .actionsRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
