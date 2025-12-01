@@ -123,7 +123,7 @@ export default function Home() {
     const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
 
     if (!key || !cluster) {
-      console.warn('Missing Pusher keys. Realtime updates disabled.');
+      console.warn('Missing Pusher keys. Realtime updates disabled, using polling fallback.');
       return;
     }
 
@@ -150,6 +150,33 @@ export default function Home() {
       setIsRealtimeConnected(false);
     };
   }, [session]);
+
+  // Polling fallback: auto-refresh room state when Pusher isn't connected
+  useEffect(() => {
+    if (!session || isRealtimeConnected) {
+      return;
+    }
+
+    const poll = async () => {
+      try {
+        const response = await fetch(`/api/rooms/${session.roomCode}`, {
+          cache: 'no-store',
+        });
+        if (response.ok) {
+          const payload = await response.json();
+          setRoom(payload as Room);
+        } else if (response.status === 404) {
+          setSession(null);
+          handleStatus({ kind: 'error', text: 'This room was closed by the host.' });
+        }
+      } catch {
+        // Silently ignore polling errors
+      }
+    };
+
+    const intervalId = window.setInterval(poll, 3000);
+    return () => window.clearInterval(intervalId);
+  }, [session, isRealtimeConnected]);
 
   const players = useMemo<Player[]>(() => {
     if (!room) return [];
