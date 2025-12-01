@@ -38,6 +38,7 @@ export default function Home() {
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const [isRoomLoading, setIsRoomLoading] = useState(false);
   const [tick, setTick] = useState(Date.now());
+  const [selectedVoteTarget, setSelectedVoteTarget] = useState<string | null>(null);
 
   const isHost = Boolean(room && session && room.hostId === session.playerId);
 
@@ -338,6 +339,7 @@ export default function Home() {
         ? 'All votes submitted!'
         : undefined,
     );
+    setSelectedVoteTarget(null); // Clear selection after voting
   };
 
   const handleCopyCode = async () => {
@@ -506,21 +508,40 @@ export default function Home() {
           <div className={styles.votingSection}>
             <p>Vote for the player that best fits this question.</p>
             <p className={styles.mutedText}>
-              Your vote is private. Click a name to vote and move to the next question.
+              Your vote is private. Select a player and click Submit.
             </p>
             <div className={styles.voteButtons}>
               {players.map((player) => (
                 <button
                   key={player.id}
                   type="button"
-                  className={styles.voteButton}
-                  onClick={() => handleVote(player.id, myQuestionIndex)}
+                  className={`${styles.voteButton} ${
+                    selectedVoteTarget === player.id ? styles.voteButtonActive : ''
+                  }`}
+                  onClick={() => setSelectedVoteTarget(player.id)}
                   disabled={isBusy}
                 >
                   {player.name}
+                  {selectedVoteTarget === player.id && (
+                    <span className={styles.badge}>Selected</span>
+                  )}
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              className={styles.buttonPrimary}
+              disabled={!selectedVoteTarget || isBusy}
+              onClick={() => {
+                if (selectedVoteTarget) {
+                  handleVote(selectedVoteTarget, myQuestionIndex);
+                }
+              }}
+            >
+              {myQuestionIndex === room.questions.length - 1
+                ? 'Submit Final Vote'
+                : 'Submit Vote & Next Question'}
+            </button>
           </div>
           <div className={styles.progressInfo}>
             <span className={styles.progressLabel}>Your progress</span>
@@ -562,6 +583,20 @@ export default function Home() {
               const totalVotes = Object.keys(question.votes).length;
               const winner = sortedResults[0];
 
+              // Build pie chart data for this question
+              const pieChartData = {
+                labels: sortedResults.map((r) => r.player.name),
+                datasets: [
+                  {
+                    data: sortedResults.map((r) => r.voteCount),
+                    backgroundColor: sortedResults.map(
+                      (_, i) => PIE_COLORS[i % PIE_COLORS.length]
+                    ),
+                    borderWidth: 0,
+                  },
+                ],
+              };
+
               return (
                 <div key={question.id} className={styles.resultCard}>
                   <div className={styles.resultHeader}>
@@ -579,22 +614,24 @@ export default function Home() {
                   ) : (
                     <p className={styles.mutedText}>No votes cast</p>
                   )}
-                  {sortedResults.length > 1 && (
-                    <div className={styles.resultBreakdown}>
-                      {sortedResults.map(({ player, voteCount }) => (
-                        <div key={player.id} className={styles.resultBar}>
-                          <div className={styles.resultBarInfo}>
-                            <span>{player.name}</span>
-                            <span>{voteCount}</span>
-                          </div>
-                          <div className={styles.resultBarTrack}>
-                            <div
-                              className={styles.resultBarFill}
-                              style={{ width: `${(voteCount / totalVotes) * 100}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
+                  {sortedResults.length > 0 && (
+                    <div className={styles.resultPieChart}>
+                      <Pie
+                        data={pieChartData}
+                        options={{
+                          plugins: {
+                            legend: {
+                              position: 'bottom',
+                              labels: {
+                                color: '#f1f5f9',
+                                padding: 12,
+                                usePointStyle: true,
+                              },
+                            },
+                          },
+                          maintainAspectRatio: true,
+                        }}
+                      />
                     </div>
                   )}
                 </div>

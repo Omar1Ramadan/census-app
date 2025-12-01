@@ -522,6 +522,12 @@
   transition: width 0.3s ease;
 }
 
+.resultPieChart {
+  max-width: 280px;
+  margin: 0 auto;
+  padding: 12px 0;
+}
+
 /* Voting section */
 .votingSection {
   display: flex;
