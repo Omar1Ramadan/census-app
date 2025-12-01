@@ -542,10 +542,65 @@ export default function Home() {
       return (
         <div className={styles.stageContent}>
           <h3>The census is complete 🎉</h3>
-          <p>
-            Browse the recap below or clear your session if you&apos;d like to start a brand new
-            room.
-          </p>
+          <p>Here are the final results from your group census!</p>
+          <div className={styles.resultsGrid}>
+            {room.questions.map((question, index) => {
+              const counts = Object.values(question.votes).reduce<Record<string, number>>(
+                (acc, playerId) => {
+                  acc[playerId] = (acc[playerId] ?? 0) + 1;
+                  return acc;
+                },
+                {},
+              );
+              const sortedResults = Object.entries(counts)
+                .map(([playerId, voteCount]) => ({
+                  player: room.players[playerId],
+                  voteCount,
+                }))
+                .filter((r) => r.player)
+                .sort((a, b) => b.voteCount - a.voteCount);
+              const totalVotes = Object.keys(question.votes).length;
+              const winner = sortedResults[0];
+
+              return (
+                <div key={question.id} className={styles.resultCard}>
+                  <div className={styles.resultHeader}>
+                    <span className={styles.resultNumber}>Q{index + 1}</span>
+                    <p className={styles.resultQuestion}>{question.text}</p>
+                  </div>
+                  {winner ? (
+                    <div className={styles.resultWinner}>
+                      <span className={styles.winnerLabel}>Winner</span>
+                      <span className={styles.winnerName}>{winner.player.name}</span>
+                      <span className={styles.winnerVotes}>
+                        {winner.voteCount} of {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className={styles.mutedText}>No votes cast</p>
+                  )}
+                  {sortedResults.length > 1 && (
+                    <div className={styles.resultBreakdown}>
+                      {sortedResults.map(({ player, voteCount }) => (
+                        <div key={player.id} className={styles.resultBar}>
+                          <div className={styles.resultBarInfo}>
+                            <span>{player.name}</span>
+                            <span>{voteCount}</span>
+                          </div>
+                          <div className={styles.resultBarTrack}>
+                            <div
+                              className={styles.resultBarFill}
+                              style={{ width: `${(voteCount / totalVotes) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       );
     }
